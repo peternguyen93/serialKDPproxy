@@ -38,6 +38,8 @@
 int opt_verbose = 0;
 int g_linecount = 0;
 static int g_ser;
+int gPort = 41139;
+
 static void serial_putc(char c)
 {
 
@@ -174,7 +176,7 @@ void setup_udp_frame(union frame_t *pFrame, struct in_addr sAddr, in_port_t sPor
 	pFrame->h.ih.ip_sum = htons(~ip_sum((unsigned char *)&pFrame->h.ih, pFrame->h.ih.ip_hl));
 
 	pFrame->h.uh.uh_sport = sPort; // Already in NBO
-	pFrame->h.uh.uh_dport = htons(41139);
+	pFrame->h.uh.uh_dport = htons(gPort);
 	pFrame->h.uh.uh_ulen = htons(sizeof(struct udphdr) + dataLen);
 	pFrame->h.uh.uh_sum = 0; // does it check this shit?
 }
@@ -217,13 +219,10 @@ int set_termopts(int fd)
 	return rc;
 }
 
-#define KDP_PORT 41139
-
 int main(int argc, char **argv)
 {
 	char *device_name;
 	int s;
-	int kdp_port = KDP_PORT;
 	char *listen_ip = NULL;
 	int is_pty = 1;
 
@@ -240,7 +239,7 @@ int main(int argc, char **argv)
 				opt_verbose = 1;
 				break;
 			case 'p':
-				kdp_port = (int)strtol(optarg, NULL, 10);
+				gPort = (int)strtol(optarg, NULL, 10);
 				break;
 			case 'l':
 				listen_ip = strdup(optarg);
@@ -268,7 +267,7 @@ int main(int argc, char **argv)
 	saddr.sin_len = INET_ADDRSTRLEN;
 #endif
 	saddr.sin_family = AF_INET;
-	saddr.sin_port = htons(kdp_port);
+	saddr.sin_port = htons(gPort);
 
 	if(!listen_ip){
 		saddr.sin_addr.s_addr = INADDR_ANY;
@@ -285,7 +284,7 @@ int main(int argc, char **argv)
 	else
 		printf("%s", listen_ip);
 	
-	printf(":%d\n", kdp_port);
+	printf(":%d\n", gPort);
 	free(listen_ip);
 
 	if (bind(s, (struct sockaddr*)&saddr, sizeof(saddr)) != 0) {
