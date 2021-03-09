@@ -215,17 +215,19 @@ int set_termopts(int fd)
     return rc;
 }
 
+#define KDP_PORT 41139
 
 int main(int argc, char **argv)
 {
     char *device_name;
     int s;
+    int kdp_port = KDP_PORT;
 
     device_name = NULL;
     while (1) {
         int c;
 
-        c = getopt(argc, argv, "vd:");
+        c = getopt(argc, argv, "vd:p:");
         if (-1 == c)
             break;
 
@@ -233,6 +235,9 @@ int main(int argc, char **argv)
             case 'v':
                 opt_verbose = 1;
                 break;
+	    case 'p':
+		kdp_port = atoi(optarg);
+		break;
         }
     }
 
@@ -253,8 +258,10 @@ int main(int argc, char **argv)
     saddr.sin_len = INET_ADDRSTRLEN;
 #endif
     saddr.sin_family = AF_INET;
-    saddr.sin_port = htons(41139);
+    saddr.sin_port = htons(kdp_port);
     saddr.sin_addr.s_addr = INADDR_ANY;
+
+    printf("Listening UDP at 0.0.0.0:%d\n", kdp_port);
 
     if (bind(s, (struct sockaddr*)&saddr, sizeof(saddr)) != 0) {
         fprintf(stderr, "Failed to bind\n");
