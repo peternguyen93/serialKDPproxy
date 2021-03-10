@@ -18,7 +18,6 @@
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <termios.h>
-#include <unistd.h>
 #include <stdlib.h>
 
 #include "kdp_serial.h"
@@ -176,7 +175,7 @@ void setup_udp_frame(union frame_t *pFrame, struct in_addr sAddr, in_port_t sPor
 	pFrame->h.ih.ip_sum = htons(~ip_sum((unsigned char *)&pFrame->h.ih, pFrame->h.ih.ip_hl));
 
 	pFrame->h.uh.uh_sport = sPort; // Already in NBO
-	pFrame->h.uh.uh_dport = htons(gPort);
+	pFrame->h.uh.uh_dport = htons(41139);
 	pFrame->h.uh.uh_ulen = htons(sizeof(struct udphdr) + dataLen);
 	pFrame->h.uh.uh_sum = 0; // does it check this shit?
 }
