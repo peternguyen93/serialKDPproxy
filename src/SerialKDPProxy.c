@@ -1,5 +1,5 @@
 #define _BSD_SOURCE 1
-//#define _GNU_SOURCE
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <sys/socket.h>
@@ -9,17 +9,8 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <net/ethernet.h>
-#include <netinet/ip.h>
-#include <netinet/udp.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <sys/un.h>
-#include <arpa/inet.h>
 #include <termios.h>
 #include <stdlib.h>
-
 #include "kdp_serial.h"
 #include "ip_sum.h"
 
@@ -113,18 +104,6 @@ int working_poll(struct pollfd fds[], nfds_t nfds, int timeout)
 
 	return r;
 }
-
-struct udp_ip_ether_frame_hdr {
-	struct ether_header eh;
-	struct ip ih;
-	struct udphdr uh;
-} __attribute__((packed));
-
-union frame_t {
-	uint8_t buf[1500];
-	struct udp_ip_ether_frame_hdr h;
-};
-union frame_t frame;
 
 /*!
   @abstract   The (fake) MAC address of the kernel's KDP

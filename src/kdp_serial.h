@@ -28,6 +28,30 @@
 #ifndef _KDP_SERIAL_H_
 #define _KDP_SERIAL_H_
 
+#include <stdint.h>
+#include <arpa/inet.h>
+#include <net/ethernet.h>
+#include <netinet/ip.h>
+#include <netinet/udp.h>
+#include <sys/wait.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/un.h>
+#include <arpa/inet.h>
+
+
+struct udp_ip_ether_frame_hdr {
+	struct ether_header eh;
+	struct ip ih;
+	struct udphdr uh;
+} __attribute__((packed));
+
+union frame_t {
+	uint8_t buf[1500];
+	struct udp_ip_ether_frame_hdr h;
+};
+union frame_t frame;
+
 /*
  * APIs for escaping a KDP UDP packet into a byte stream suitable
  * for a standard serial console
