@@ -202,7 +202,6 @@ int main(int argc, char **argv)
 	char *device_name;
 	int s;
 	char *listen_ip = NULL;
-	int is_pty = 1;
 
 	device_name = NULL;
 	while (1) {
@@ -222,8 +221,7 @@ int main(int argc, char **argv)
 			case 'l':
 				listen_ip = strdup(optarg);
 				break;
-			case 's':
-				is_pty = 0;
+			default:
 				break;
 		}
 	}
@@ -247,42 +245,13 @@ int main(int argc, char **argv)
 	saddr.sin_family = AF_INET;
 	saddr.sin_port = htons(gPort);
 
-	if(!listen_ip){
-		saddr.sin_addr.s_addr = INADDR_ANY;
-	} else {
-		if(!inet_pton(AF_INET, listen_ip, &saddr.sin_addr.s_addr)){
-			perror("inet_pton");
-			return 1;
-		}
-	}
-
-	printf("Listening UDP at ");
-	if(!listen_ip)
-		printf("0.0.0.0");
-	else
-		printf("%s", listen_ip);
-	
-	printf(":%d\n", gPort);
-	free(listen_ip);
-
-	if (bind(s, (struct sockaddr*)&saddr, sizeof(saddr)) != 0) {
-		fprintf(stderr, "Failed to bind\n");
-		return 1;
-	}
-
 	struct sockaddr_un serial_unix;
 
-	if(is_pty){
-		fprintf(stderr, "Opening %s\n", device_name);
-		g_ser = open(device_name, O_RDWR | O_NONBLOCK | O_NOCTTY);
-		if (-1 == g_ser) {
-			fprintf(stderr, "Failed to open serial\n");
-			return 1;
-		}
-
-		set_termopts(g_ser);
-	} else {
-		// is unix socket
+	fprintf(stderr, "Opening %s\n", device_name);
+	// asume device_name is pty
+	g_ser = open(device_name, O_RDWR | O_NONBLOCK | O_NOCTTY);
+	if (-1 == g_ser) {
+		// try to open with unix socket
 		fprintf(stderr, "Connect to unix socket %s\n", device_name);
 
 		memset((char *)&serial_unix, 0, sizeof(struct sockaddr_un));
@@ -305,6 +274,33 @@ int main(int argc, char **argv)
 			perror("connect");
 			return 1;
 		}
+
+	} else {
+		// set termopt for pty device
+		set_termopts(g_ser);
+	}
+	
+	if(!listen_ip){
+		saddr.sin_addr.s_addr = INADDR_ANY;
+	} else {
+		if(!inet_pton(AF_INET, listen_ip, &saddr.sin_addr.s_addr)){
+			perror("inet_pton");
+			return 1;
+		}
+	}
+
+	printf("Listening UDP at ");
+	if(!listen_ip)
+		printf("0.0.0.0");
+	else
+		printf("%s", listen_ip);
+	
+	printf(":%d\n", gPort);
+	free(listen_ip);
+
+	if (bind(s, (struct sockaddr*)&saddr, sizeof(saddr)) != 0) {
+		fprintf(stderr, "Failed to bind\n");
+		return 1;
 	}
 
 	fprintf(stderr, "Waiting for packets, pid=%lu\n", (long unsigned)getpid());
